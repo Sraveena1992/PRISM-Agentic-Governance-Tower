@@ -9,6 +9,10 @@ except:
 
 app = FastAPI(title="PRISM Governance Tower - ET Hackathon 2026")
 
+@app.get("/")
+def root():
+    return {"status": "PRISM is Live!", "docs": "/docs", "health": "/health", "message": "ET AI Hackathon 2026 - Accenture"}
+
 @app.get("/health")
 def health(): 
     return {"status":"ok","service":"PRISM","version":"1.0"}
