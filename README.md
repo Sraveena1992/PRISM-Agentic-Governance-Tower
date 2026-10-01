@@ -17,18 +17,25 @@ Single agent = fraud risk. Manual checks = 40 hrs/week waste. PRISM uses Orchest
 
 - **Impact:** 90% faster audits, 100% traceable decisions.
 
-## 🚀 Live Deployment Proof - F3/D2 Winner Build
+## 🏆 PRISM - F3/D2 Winner Build - LIVE PROOF
 
-### Swagger API - 4 Endpoints Live
-![PRISM Live API - F3/D2 Build]
-<img width="1551" height="809" alt="docs_screenshot_1" src="https://github.com/user-attachments/assets/994c82f1-ea55-4bdf-b419-ded42113f836" />
+### 1. Live Status (F3/D2 Verified in Code)
+![Live Status]
+`https://prism-agentic-governance-tower.onrender.com/`
+<img width="1217" height="432" alt="screenshots_live_status_pretty" src="https://github.com/user-attachments/assets/43d33e5b-9617-42ce-bd65-746e8bd01585" />
 
-*Live URL: https://prism-agentic-governance-tower.onrender.com/docs*
 
-**Endpoints Verified:**
-- POST /ingest-document -> D2 Multimodal PDF/OCR Ingestion
-- POST /evaluate -> Regulatory Chain Traceability
-- POST /simulate -> F3 What-If Simulation
+
+### 2. Swagger - 4 POST Endpoints (D2 + F3 Proof)
+![Swagger Endpoints]
+`https://prism-agentic-governance-tower.onrender.com/docs`
+<img width="1551" height="809" alt="docs_screenshot_1" src="https://github.com/user-attachments/assets/d88523a9-5295-462c-91cc-cb284f0381f9" />
+
+
+**Live Endpoints:**
+- POST /ingest-document -> Multimodal PDF/OCR
+- POST /evaluate -> Full Regulatory Trace Chain
+- POST /simulate -> What-If Simulation (F3 Differentiator)
 - POST /approve/{audit_id} -> Human-in-Loop Fail-Closed
 
 
