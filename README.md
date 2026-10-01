@@ -1,9 +1,15 @@
 # PRISM — Agentic Enterprise Governance Tower
 ET AI Hackathon 2026 | Accenture
 
-Agents that work. Humans who lead. Audit that never lies.
+**PRISM - Agentic Governance Tower solves Accenture's real vendor risk problem.**
+Single agent = fraud risk. Manual checks = 40 hrs/week waste. PRISM uses Orchestrator + 3 GenAI Agents + ML Risk Scorer (0.05/0.65/0.99) + RAG Policies + Human Approval + Fail-Closed Audit.
+— Agents that work. Humans who lead. Audit that never lies.
 
-🌐 **Live Demo:** https://prism-agentic-governance-tower.onrender.com/docs
+
+## 🚀 Live Demo 🌐
+- **API Live:** https://prism-agentic-governance-tower.onrender.com
+- **Swagger Docs:** https://prism-agentic-governance-tower.onrender.com/docs
+- **Health Check:** https://prism-agentic-governance-tower.onrender.com/health
 
 - **Problem:** Enterprises lose millions due to manual vendor risk checks.
 
