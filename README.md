@@ -17,6 +17,21 @@ Single agent = fraud risk. Manual checks = 40 hrs/week waste. PRISM uses Orchest
 
 - **Impact:** 90% faster audits, 100% traceable decisions.
 
+## 🚀 Live Deployment Proof - F3/D2 Winner Build
+
+### Swagger API - 4 Endpoints Live
+![PRISM Live API - F3/D2 Build]
+<img width="1551" height="809" alt="docs_screenshot_1" src="https://github.com/user-attachments/assets/994c82f1-ea55-4bdf-b419-ded42113f836" />
+
+*Live URL: https://prism-agentic-governance-tower.onrender.com/docs*
+
+**Endpoints Verified:**
+- POST /ingest-document -> D2 Multimodal PDF/OCR Ingestion
+- POST /evaluate -> Regulatory Chain Traceability
+- POST /simulate -> F3 What-If Simulation
+- POST /approve/{audit_id} -> Human-in-Loop Fail-Closed
+
+
 <img width="1600" height="856" alt="PRISM_LIVE_PROOF" src="https://github.com/user-attachments/assets/352f4321-f36a-4a23-91f4-6dc0672a3dda" />
 
 ## 🔥 LIVE DEMO PROOF - 200 OK
