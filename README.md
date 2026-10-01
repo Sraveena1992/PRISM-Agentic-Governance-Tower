@@ -3,6 +3,8 @@ ET AI Hackathon 2026 | Accenture
 
 Agents that work. Humans who lead. Audit that never lies.
 
+🌐 **Live Demo:** https://prism-agentic-governance-tower.onrender.com/docs
+
 ## Why This Wins?
 Enterprise procurement: 40 hrs/week vendor validation. Single autonomous agent = fraud risk.
 PRISM = Orchestrator + 3 GenAI Agents + ML Risk Scorer (0.05/0.65/0.99) + RAG Policies + Human Approval + Fail-Closed Audit.
