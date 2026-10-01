@@ -1,0 +1,20 @@
+# PRISM — Agentic Enterprise Governance Tower
+ET AI Hackathon 2026 | Accenture
+
+Agents that work. Humans who lead. Audit that never lies.
+
+## Why This Wins?
+Enterprise procurement: 40 hrs/week vendor validation. Single autonomous agent = fraud risk.
+PRISM = Orchestrator + 3 GenAI Agents + ML Risk Scorer (0.05/0.65/0.99) + RAG Policies + Human Approval + Fail-Closed Audit.
+
+## Where is What [For Judges]
+- ML: backend/ml_models/train.py -> 2000 synthetic vendors, RandomForest
+- GenAI: backend/agents/ -> Data/Risk/Action Agents (LangGraph)
+- RAG: backend/rag/retriever.py -> Policy retrieval before every decision
+- Train Data: backend/data/synthetic_vendors/vendors.csv
+- Break into Steps: backend/agents/orchestrator.py -> 5-step workflow
+
+## Run
+pip install -r requirements.txt
+python backend/ml_models/train.py
+uvicorn backend.api.main:app --reload
