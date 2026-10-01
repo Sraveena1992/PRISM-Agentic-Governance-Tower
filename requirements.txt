@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+langgraph
+langchain
+scikit-learn
+pandas
+faiss-cpu
+pydantic
+python-multipart
+faker
