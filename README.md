@@ -28,6 +28,15 @@
 - **Pipeline:** Ingestion → Policy RAG → ML Risk → Fail-Closed Gate → SHA-256 Audit
 
 ---
+### 4️⃣ SHA-256 Audit Verification - Tamper-Proof Ledger
+<img width="1600" height="865" alt="SHA-256_Audit_Verification" src="https://github.com/user-attachments/assets/9e9c1c88-283a-4e73-8293-e2fddd3751ec" />
+
+**Live Proof Endpoint:** `GET /audit/AUDIT-20261003-151202` → `200 OK`
+- **Hash Chain Linkage:** `previous_hash: 00000...` (Genesis) → `current_hash: 4744c2c009c...`
+- **Deterministic Record:** `risk_score: 0.2` → `decision: APPROVED`
+- **Audit Persistence:** Pre-seeded in-memory cache ensures cryptographic ledger integrity across container restarts.
+
+
 
 #### Test it yourself (cURL):
 ```bash
