@@ -34,4 +34,4 @@ async def verify_audit():
 @app.post("/policy/search")
 async def search_policy(query: dict):
     hits = get_relevant_policies(query.get("q", "ESG GST"))
-    return {"retriever": "FAISS + MiniLM", "results": hits}
+    return {"retriever": "TF-IDF Vector + Cosine Matrix", "results": hits}
