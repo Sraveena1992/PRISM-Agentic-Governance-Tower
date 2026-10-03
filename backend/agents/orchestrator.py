@@ -4,13 +4,30 @@ from datetime import datetime
 from typing import Dict, Any, Callable, Optional, List
 
 from backend.governance.audit import AuditStore, audit_store
-from backend.rag.retriever import PolicyRetriever, get_relevant_policies
+
+# Safely import functions / classes from retriever
+try:
+    from backend.rag.retriever import PolicyRetriever
+except ImportError:
+    PolicyRetriever = None
+
+try:
+    from backend.rag.retriever import get_relevant_policies
+except ImportError:
+    def get_relevant_policies(query: str, top_k: int = 3):
+        return []
 
 
 class GovernanceOrchestrator:
     def __init__(self, audit_store_instance: Optional[AuditStore] = None, retriever_instance: Optional[Any] = None):
         self.audit_store = audit_store_instance or audit_store
-        self.retriever = retriever_instance or PolicyRetriever()
+        # Fallback to None if PolicyRetriever class does not exist
+        if retriever_instance:
+            self.retriever = retriever_instance
+        elif PolicyRetriever is not None:
+            self.retriever = PolicyRetriever()
+        else:
+            self.retriever = None
 
     def run_pipeline(self, payload: Dict[str, Any], risk_scorer_fn: Callable[[Dict[str, Any]], float]) -> Dict[str, Any]:
         """
@@ -44,7 +61,7 @@ class GovernanceOrchestrator:
 
         # --- STAGE 2: Policy RAG Vector Retrieval ---
         rag_query = f"ESG {esg_score} GST fraud {gst_fraud_flag} sanctions {sanctions_match} financial stability {financial_stability}"
-        if hasattr(self.retriever, 'search'):
+        if self.retriever and hasattr(self.retriever, 'search'):
             retrieved_policies = self.retriever.search(query=rag_query, top_k=3)
         else:
             retrieved_policies = get_relevant_policies(rag_query)
