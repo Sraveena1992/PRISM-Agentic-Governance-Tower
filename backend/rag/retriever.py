@@ -31,3 +31,11 @@ def get_relevant_policies(query: str, top_k=2):
             "retriever": "TF-IDF Vector + Cosine Matrix"
         })
     return results
+
+class PolicyRetriever:
+    """Wrapper class for policy retrieval."""
+    def __init__(self):
+        pass
+
+    def search(self, query: str, top_k: int = 3):
+        return get_relevant_policies(query, top_k=top_k)
