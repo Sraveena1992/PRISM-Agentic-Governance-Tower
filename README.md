@@ -4,8 +4,6 @@ ET AI Hackathon 2026 | Accenture
 ![Live](https://img.shields.io/badge/Live-200%20OK-brightgreen) ![Agents](https://img.shields.io/badge/Agents-5%20Active-blue) ![Audit](https://img.shields.io/badge/Audit-SHA256%20Chained-black) ![RAG](https://img.shields.io/badge/RAG-TF--IDF%20%2B%20Cosine-orange) ![Build](https://img.shields.io/badge/Build-3.0.0%20Winner-success)
 
 **PRISM - Agentic Governance Tower solves Accenture's real vendor risk problem.**
-
-**PRISM - Agentic Governance Tower solves Accenture's real vendor risk problem.**
 Single agent = fraud risk. Manual checks = 40 hrs/week waste. PRISM uses a 5-Agent Deterministic Orchestration Pipeline + ML Risk Scorer + Vector Policy RAG + Human-in-the-Loop Gate + SHA-256 Chained Audit Trail.
 — *Agents that work. Humans who lead. Audit that never lies.*
 
