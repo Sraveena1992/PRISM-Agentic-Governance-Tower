@@ -1,27 +1,54 @@
-# ML: Training on synthetic enterprise data - ET Hackathon requirement
-import pandas as pd, pathlib, random, pickle
+import os
+import joblib
+import numpy as np
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from faker import Faker
 
-fake = Faker()
-path = pathlib.Path(__file__).parent.parent / "data" / "synthetic_vendors" / "vendors.csv"
-path.parent.mkdir(parents=True, exist_ok=True)
+MODEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "random_forest_risk_model.joblib"))
 
-rows=[]
-for i in range(2000):
-    esg=random.randint(20,95); gst=random.choice([0,0,0,1]); sanc=random.choice([0,0,0,0,1]); inv=random.random()
-    label=2 if sanc==1 or inv>0.8 else 1 if esg<45 or gst==1 else 0
-    rows.append([f"VEND-{i}",esg,gst,sanc,inv,label])
+def generate_synthetic_training_data(n_samples: int = 1000):
+    np.random.seed(42)
+    
+    esg_score = np.random.uniform(10.0, 100.0, n_samples)
+    financial_stability = np.random.uniform(0.1, 1.0, n_samples)
+    gst_fraud_flag = np.random.choice([0, 1], size=n_samples, p=[0.92, 0.08])
+    sanctions_match = np.random.choice([0, 1], size=n_samples, p=[0.95, 0.05])
+    invoice_anomaly = np.random.uniform(0.0, 1.0, n_samples)
 
-df=pd.DataFrame(rows, columns=["vendor_id","esg_score","gst_fraud_flag","sanctions_match","invoice_anomaly","label"])
-df.to_csv(path,index=False)
+    # Risk Labeling Logic
+    high_risk_condition = (
+        (gst_fraud_flag == 1) | 
+        (sanctions_match == 1) | 
+        (esg_score < 40.0) | 
+        (financial_stability < 0.5) | 
+        (invoice_anomaly > 0.6)
+    )
+    labels = np.where(high_risk_condition, 1, 0)
 
-X=df[["esg_score","gst_fraud_flag","sanctions_match","invoice_anomaly"]]
-y=df["label"]
-X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.2)
-model=RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X_train,y_train)
-print(f"Accuracy: {model.score(X_test,y_test):.2f} | Data: {path}")
-with open(pathlib.Path(__file__).parent / "risk_model.pkl","wb") as f:
-    pickle.dump(model,f)
+    df = pd.DataFrame({
+        "esg_score": esg_score,
+        "financial_stability_score": financial_stability,
+        "gst_fraud_flag": gst_fraud_flag,
+        "sanctions_match": sanctions_match,
+        "invoice_anomaly": invoice_anomaly,
+        "high_risk_label": labels
+    })
+    return df
+
+
+def train_and_save_model():
+    print("[ML Train] Generating synthetic procurement dataset...")
+    df = generate_synthetic_training_data(n_samples=1500)
+    
+    X = df[["esg_score", "financial_stability_score", "gst_fraud_flag", "sanctions_match", "invoice_anomaly"]]
+    y = df["high_risk_label"]
+
+    clf = RandomForestClassifier(n_estimators=100, max_depth=6, random_state=42)
+    clf.fit(X, y)
+
+    joblib.dump(clf, MODEL_PATH)
+    print(f"[ML Train] Trained RandomForest model saved to {MODEL_PATH}")
+
+
+if __name__ == "__main__":
+    train_and_save_model()
