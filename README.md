@@ -41,11 +41,23 @@ Single agent = fraud risk. Manual checks = 40 hrs/week waste. PRISM uses a 5-Age
 - `GET /audit/verify` -> SHA-256 Merkle-Style Ledger Chain Integrity Check
 - `GET /health` -> Real-time System Metrics & Multi-Agent Telemetry
 
-## 📸 Live API Demonstration
+## 📸 Live API Demonstration & Governance Workflows
 
-Below is the live Swagger UI execution response from our deployed Render instance (`/evaluate` endpoint), demonstrating real-time ML risk scoring, RAG policy retrieval, and multi-agent workflow tracing:
+PRISM automatically routes vendor evaluation based on risk profiles, ML scoring, and regulatory policy mapping. Below are the live Swagger UI test results from our deployed Render instance (`https://prism-agentic-governance-tower.onrender.com/docs`):
 
-<img width="1600" height="856" alt="doc_sassets_evaluate_demo" src="https://github.com/user-attachments/assets/db6d2a7d-9546-428b-9ad6-f8bd50850701" />
+### Scenario 1: Low-Risk Vendor Auto-Approval (`200 OK`)
+High ESG score (`85`) and clean GST status (`gst_fraud_flag: 0`) trigger low risk score (`0.05`) and instant `APPROVED` status.
+
+<img width="1600" height="867" alt="evaluate_approved" src="https://github.com/user-attachments/assets/fe6931b2-c7cb-471a-bfa3-ad3a3397eeaa" />
+
+
+---
+
+### Scenario 2: High-Risk Fraud Vendor Rejection (`200 OK`)
+Fraud flag detected (`gst_fraud_flag: 1`) triggers immediate fail-closed rule engine, raising risk score to `0.99` with `REJECTED` status and policy citations.
+
+<img width="1600" height="856" alt="doc_sassets_evaluate_demo" src="https://github.com/user-attachments/assets/edd58f65-1189-4e2a-ac49-12db98ffb607" />
+
 
 
 ---
