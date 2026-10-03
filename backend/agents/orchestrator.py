@@ -1,115 +1,75 @@
-import os
-import json
+import logging
 from datetime import datetime
-from typing import Dict, Any, Callable, Optional, List
+from typing import Dict, Any
+from backend.agents.procurement_agent import ProcurementAgent
+from backend.agents.governance_agent import GovernanceAgent
+from backend.agents.action_agent import ActionAgent
+from backend.governance.audit import audit_store
 
-from backend.governance.audit import AuditStore, audit_store
+logger = logging.getLogger("PRISM-Orchestrator")
 
-# Safely import functions / classes from retriever
-try:
-    from backend.rag.retriever import PolicyRetriever
-except ImportError:
-    PolicyRetriever = None
+class AgenticGovernanceOrchestrator:
+    """
+    PRISM Control Plane: Procurement Agent -> Governance Agent -> Action Agent
+    Each agent reasons independently, uses tools, and audit is the verification layer.
+    """
+    def __init__(self):
+        self.procurement_agent = ProcurementAgent()
+        self.governance_agent = GovernanceAgent()
+        self.action_agent = ActionAgent()
 
-try:
-    from backend.rag.retriever import get_relevant_policies
-except ImportError:
-    def get_relevant_policies(query: str, top_k: int = 3):
-        return []
+    def run_agentic_workflow(self, vendor_payload: Dict[str, Any], simulate_failure: str = None) -> Dict[str, Any]:
+        audit_id = vendor_payload.get("audit_id") or f"AUDIT-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}"
 
+        # Step 1: Procurement Agent - Reasoning & Tool Selection
+        enriched_data, agent_plan = self.procurement_agent.plan_and_enrich(vendor_payload)
 
-class GovernanceOrchestrator:
-    def __init__(self, audit_store_instance: Optional[AuditStore] = None, retriever_instance: Optional[Any] = None):
-        self.audit_store = audit_store_instance or audit_store
-        # Fallback to None if PolicyRetriever class does not exist
-        if retriever_instance:
-            self.retriever = retriever_instance
-        elif PolicyRetriever is not None:
-            self.retriever = PolicyRetriever()
-        else:
-            self.retriever = None
+        # Step 2: Governance Agent - RAG + ML + Rules + Self-Correction
+        try:
+            if simulate_failure == "policy_unavailable":
+                raise ConnectionError("Policy Vector Store unavailable - simulating failure")
+            gov_result = self.governance_agent.evaluate(enriched_data)
+        except Exception as e:
+            logger.error(f"Governance failure: {e} -> Triggering autonomous recovery")
+            gov_result = self.governance_agent.recover_with_safe_defaults(enriched_data, error=str(e))
 
-    def run_pipeline(self, payload: Dict[str, Any], risk_scorer_fn: Callable[[Dict[str, Any]], float]) -> Dict[str, Any]:
-        """
-        Deterministic 5-Stage Authoritative Governance Pipeline Execution.
-        Stage 1: Ingestion & Metadata Normalization
-        Stage 2: Policy RAG Retrieval (TF-IDF Vector + Cosine Similarity)
-        Stage 3: ML Risk Engine Scoring (Scikit-Learn RandomForest Scorer)
-        Stage 4: Fail-Closed Gate & Decision Matrix
-        Stage 5: Cryptographic SHA-256 Chained Audit Trail
-        """
-        # --- STAGE 1: Data Ingestion & Field Normalization ---
-        vendor_id = payload.get("vendor_id", "VEND-UNKNOWN")
-        document_text = payload.get("document_text", payload.get("content", "Vendor compliance evaluation record"))
-        
-        # Canonical feature normalization across incoming API requests
-        esg_score = float(payload.get("esg_score", payload.get("esg_rating", 75.0)))
-        financial_stability = float(payload.get("financial_stability_score", 0.85))
-        gst_fraud_flag = int(payload.get("gst_fraud_flag", 0))
-        sanctions_match = int(payload.get("sanctions_match", 0))
-        invoice_anomaly = float(payload.get("invoice_anomaly", payload.get("invoice_anomaly_score", 0.10)))
-
-        normalized_payload = {
-            "vendor_id": vendor_id,
-            "document_text": document_text,
-            "esg_score": esg_score,
-            "financial_stability_score": financial_stability,
-            "gst_fraud_flag": gst_fraud_flag,
-            "sanctions_match": sanctions_match,
-            "invoice_anomaly": invoice_anomaly
-        }
-
-        # --- STAGE 2: Policy RAG Vector Retrieval ---
-        rag_query = f"ESG {esg_score} GST fraud {gst_fraud_flag} sanctions {sanctions_match} financial stability {financial_stability}"
-        if self.retriever and hasattr(self.retriever, 'search'):
-            retrieved_policies = self.retriever.search(query=rag_query, top_k=3)
-        else:
-            retrieved_policies = get_relevant_policies(rag_query)
-
-        # --- STAGE 3: Deterministic ML Risk Engine Scoring ---
-        risk_score = risk_scorer_fn(normalized_payload)
-
-        # --- STAGE 4: Fail-Closed Decision Engine ---
-        if gst_fraud_flag == 1 or sanctions_match == 1:
-            decision = "REJECTED"
-            requires_human_approval = False
-            gate_reason = "Fail-Closed Statutory Block: GST fraud / Sanctions list match - automatic rejection per compliance policy"
-        elif risk_score >= 0.50 or esg_score < 40.0 or financial_stability < 0.50:
-            decision = "REVIEW"
-            requires_human_approval = True
-            gate_reason = "Risk score exceeds automated tolerance threshold; routed to Human Gate"
-        else:
-            decision = "APPROVED"
-            requires_human_approval = False
-            gate_reason = "Low risk profile; auto-approval policy met"
-
-        audit_id = payload.get("audit_id") or f"AUDIT-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}"
-
-        execution_summary = {
-            "audit_id": audit_id,
-            "vendor_id": vendor_id,
-            "pipeline_stages_completed": 5,
-            "risk_score": risk_score,
-            "decision": decision,
-            "requires_human_approval": requires_human_approval,
-            "gate_reason": gate_reason,
-            "retrieved_policies": retrieved_policies,
-            "fail_closed_active": True,
-            "timestamp": datetime.utcnow().isoformat() + "Z"
-        }
-
-        # --- STAGE 5: Audit Ledger (Cryptographic SHA-256 Hash Chain) ---
-        audit_record = self.audit_store.log_event(
+        # Step 3: Action Agent - Fail-Closed Execution
+        action_result = self.action_agent.execute_action(
             audit_id=audit_id,
-            action=f"GOVERNANCE_EVALUATION_{decision}",
-            details=execution_summary
+            decision=gov_result["decision"],
+            vendor_id=enriched_data.get("vendor_id", vendor_payload.get("vendor_id")),
+            requires_human_approval=gov_result["requires_human_approval"]
         )
 
-        execution_summary["audit_chain_hash"] = audit_record.get("current_hash")
-        execution_summary["previous_hash"] = audit_record.get("previous_hash")
+        # Step 4: Tamper-evident Audit
+        audit_entry = audit_store.log_event(
+            audit_id=audit_id,
+            action=f"AGENT_WORKFLOW_{gov_result['decision']}",
+            details={
+                "audit_id": audit_id,
+                "vendor_id": enriched_data.get("vendor_id"),
+                "pipeline_stages_completed": 5,
+                "agent_plan": agent_plan,
+                "governance_evaluation": gov_result,
+                "downstream_action": action_result,
+                "fail_closed_active": True
+            }
+        )
 
-        return execution_summary
+        return {
+            "audit_id": audit_id,
+            "pipeline_stages_completed": 5,
+            "agent_plan": agent_plan,
+            "risk_score": gov_result["risk_score"],
+            "decision": gov_result["decision"],
+            "gate_reason": gov_result.get("gate_reason"),
+            "requires_human_approval": gov_result["requires_human_approval"],
+            "retrieved_policies": gov_result.get("retrieved_policies", []),
+            "action_status": action_result["status"],
+            "downstream_po_id": action_result.get("po_id"),
+            "current_hash": audit_entry["current_hash"],
+            "previous_hash": audit_entry["previous_hash"],
+            "fail_closed_active": True
+        }
 
-
-# Export Singleton Instance and Class
-orchestrator = GovernanceOrchestrator()
+orchestrator = AgenticGovernanceOrchestrator()
