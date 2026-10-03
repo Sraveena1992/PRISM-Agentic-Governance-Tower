@@ -7,7 +7,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from backend.agents.orchestrator import GovernanceOrchestrator, orchestrator
+from backend.agents.orchestrator import orchestrator
+GovernanceOrchestrator = orchestrator.__class__
 from backend.governance.audit import AuditStore, audit_store
 from backend.rag.retriever import PolicyRetriever, get_relevant_policies
 from backend.ml_models.risk_scorer import score_risk
