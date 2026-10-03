@@ -41,7 +41,12 @@ Single agent = fraud risk. Manual checks = 40 hrs/week waste. PRISM uses a 5-Age
 - `GET /audit/verify` -> SHA-256 Merkle-Style Ledger Chain Integrity Check
 - `GET /health` -> Real-time System Metrics & Multi-Agent Telemetry
 
-<img width="1600" height="856" alt="PRISM_LIVE_PROOF" src="https://github.com/user-attachments/assets/352f4321-f36a-4a23-91f4-6dc0672a3dda" />
+## 📸 Live API Demonstration
+
+Below is the live Swagger UI execution response from our deployed Render instance (`/evaluate` endpoint), demonstrating real-time ML risk scoring, RAG policy retrieval, and multi-agent workflow tracing:
+
+<img width="1600" height="856" alt="doc_sassets_evaluate_demo" src="https://github.com/user-attachments/assets/db6d2a7d-9546-428b-9ad6-f8bd50850701" />
+
 
 ---
 
