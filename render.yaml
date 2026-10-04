@@ -2,5 +2,5 @@ services:
     - type: web
     name: prism-governance-tower
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && python -m backend.ml_models.train
     startCommand: uvicorn backend.api.main:app --host 0.0.0.0 --port 10000
