@@ -12,18 +12,40 @@ action_agent = ActionAgent()
 
 class VendorRequest(BaseModel):
     vendor_id: str
-    gstin: str = ""
-    document_text: str = ""
+    vendor_name: Optional[str] = "Unknown Vendor"
+    gst_number: Optional[str] = ""
+    gstin: Optional[str] = ""
+    document_text: Optional[str] = ""
     esg_score: float = 80.0
     gst_fraud_flag: int = 0
     sanctions_match: int = 0
+    amount: Optional[float] = 0.0
+    pan_number: Optional[str] = ""
+    vendor_id_alias: Optional[str] = None
+
+    class Config:
+        extra = "allow" # FIX 422: Allow any extra fields
 
 class HumanApprovalRequest(BaseModel):
     approved: bool
     approved_by: str = "Compliance_Officer_Admin"
     comments: Optional[str] = "Approved via governance dashboard"
 
-# --- P0 #3.1 REAL CHECKS ---
+    class Config:
+        extra = "allow"
+
+def normalize_vendor_dict(data: dict) -> dict:
+    d = dict(data)
+    if d.get("gst_number") and not d.get("gstin"):
+        d["gstin"] = d["gst_number"]
+    if not d.get("gstin") and d.get("gst_number"):
+        d["gstin"] = d["gst_number"]
+    if not d.get("gstin"):
+        d["gstin"] = ""
+    if d.get("vendor_name"):
+        d["document_text"] = f"{d.get('vendor_name')} {d.get('document_text','')} Amount:{d.get('amount','')}"
+    return d
+
 def get_ml_status():
     possible_paths = [
         os.path.join(os.path.dirname(__file__), "../ml_models/random_forest_risk_model.joblib"),
@@ -43,6 +65,7 @@ def get_ml_status():
     return "MISSING - FALLBACK ACTIVE", None
 
 def get_rag_status():
+    last_err = "not checked"
     for module_path in ["backend.rag.retriever", "backend.governance.retriever", "rag.retriever"]:
         try:
             mod = __import__(module_path, fromlist=["PolicyRetriever"])
@@ -88,39 +111,35 @@ def health():
 @app.post("/process-vendor")
 def process_vendor(req: VendorRequest):
     try:
-        return orchestrator.process_vendor_request(req.dict())
+        data = normalize_vendor_dict(req.dict())
+        result = orchestrator.run_workflow(data)
+        return result
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/human-approval/{audit_id}")
 def human_approval(audit_id: str, req: HumanApprovalRequest):
-    """
-    P0 #2 FINAL FIX - Correct arg contract
-    Old: execute_post_approval_action(audit_id, approved, approved_by, comments) = 4 args -> 500
-    New: fetch vendor_id from audit trail, call with correct 5 args
-    """
     try:
-        # Fetch original record to get vendor_id
         original = None
         try:
-            original = audit_store.get_by_id(audit_id)
+            if hasattr(audit_store, 'get_by_id'):
+                original = audit_store.get_by_id(audit_id)
         except:
             pass
-
         if not original:
             try:
                 trail_data = audit_store.get_full_trail()
                 trail = trail_data.get("trail", []) if isinstance(trail_data, dict) else trail_data
-                original = next((r for r in trail if r.get("audit_id") == audit_id or r.get("id") == audit_id or r.get("audit_id") == audit_id), None)
+                original = next((r for r in trail if r.get("audit_id") == audit_id or r.get("id") == audit_id), None)
             except:
                 pass
-
         if not original:
             raise HTTPException(status_code=404, detail=f"Audit ID {audit_id} not found")
 
-        vendor_id = original.get("vendor_id", original.get("vendor", "UNKNOWN"))
+        vendor_id = original.get("vendor_id", "UNKNOWN")
 
-        # CORRECT CALL: audit_id, vendor_id, approved_by, approved, comments
         result = action_agent.execute_post_approval_action(
             audit_id=audit_id,
             vendor_id=vendor_id,
@@ -128,21 +147,23 @@ def human_approval(audit_id: str, req: HumanApprovalRequest):
             approved=req.approved,
             comments=req.comments
         )
-
-        # Add human decision to audit chain
-        audit_store.add_record({
-            "vendor_id": vendor_id,
-            "decision": "APPROVED_BY_HUMAN" if req.approved else "REJECTED_BY_HUMAN",
-            "risk_score": original.get("risk_score", 0.5),
-            "action": result.get("action", "PO_CREATED" if req.approved else "NO_ACTION"),
-            "parent_audit_id": audit_id,
-            "approved_by": req.approved_by
-        })
-
+        try:
+            audit_store.add_record({
+                "vendor_id": vendor_id,
+                "decision": "APPROVED_BY_HUMAN" if req.approved else "REJECTED_BY_HUMAN",
+                "risk_score": original.get("risk_score", 0.5),
+                "action": result.get("action", "PO_CREATED" if req.approved else "NO_ACTION"),
+                "parent_audit_id": audit_id,
+                "approved_by": req.approved_by
+            })
+        except:
+            pass
         return result
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/audit/trail")
@@ -159,39 +180,28 @@ def audit_trail():
 
 @app.get("/audits")
 def audits_alias():
-    """P0 #4 FIX - Dashboard calls /audits, alias to /audit/trail"""
     return audit_trail()
 
 @app.get("/audit/verify")
 def audit_verify():
-    """
-    P0 #3 FIX - Canonical public contract for dashboard + README + PDF
-    """
     result = audit_store.verify_chain()
     is_valid = result.get("is_valid", result.get("verified", False))
     count = result.get("count", result.get("records_checked", 0))
-
     return {
         "verified": bool(is_valid),
         "records_checked": int(count),
         "algorithm": "SHA-256",
         "chain_status": "INTACT" if is_valid else "TAMPERED",
         "message": result.get("message", "Full cryptographic verification passed" if is_valid else "Chain integrity check failed"),
-        # backward compat
         "is_valid": bool(is_valid),
         "count": int(count)
     }
 
 @app.post("/simulate-failure")
 def simulate_failure():
-    """
-    P0 #1 FIX - Must never throw TypeError, must return 200 with proof
-    """
     from backend.governance.governance_agent import governance_agent
     fake = {"vendor_id": "SIM-FAIL-TEST", "document_text": "test failure", "esg_score": 10, "gst_fraud_flag": 0, "sanctions_match": 0}
     recovered = governance_agent.recover_with_safe_defaults(fake, "Simulated ML/RAG failure")
-
-    # Audit this fail-closed event
     try:
         audit_store.add_record({
             "vendor_id": "SIM-FAIL-TEST",
@@ -203,7 +213,6 @@ def simulate_failure():
         })
     except:
         pass
-
     return {
         "vendor_id": "SIM-FAIL-TEST",
         "risk_score": 0.99,
