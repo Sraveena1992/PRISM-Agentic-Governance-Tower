@@ -89,7 +89,7 @@ class GovernanceAgent:
             return self.recover_with_safe_defaults(enriched_data, f"ML failure: {e}")
 
         gate_reason = "Policy + ML evaluation passed"
-        
+
         if gst_fraud_flag == 1 or sanctions_match == 1:
             decision = "REJECTED"
             risk_score = 0.99
@@ -117,7 +117,7 @@ class GovernanceAgent:
             "fail_closed_active": False,
             "fail_closed_recovery": False,
             "fail_closed_proof": False,
-            "action": "NO_ACTION" if decision != "APPROVED" else "PO_CREATED",
+            "action": "NO_ACTION" if decision!= "APPROVED" else "PO_CREATED",
             "po_generated": decision == "APPROVED"
         }
 
@@ -130,7 +130,7 @@ class GovernanceAgent:
         - Fallback: recover_with_safe_defaults() with no args
         """
         print(f"⚠️ GOVERNANCE FAIL-CLOSED RECOVERY TRIGGERED: {error_message}")
-        vendor_id = (enriched_data or {}).get("vendor_id", "UNKNOWN")
+        vendor_id = (enriched_data or {}).get("vendor_id", "UNKNOWN") if isinstance(enriched_data, dict) else "UNKNOWN"
         return {
             "vendor_id": vendor_id,
             "risk_score": 0.99,
