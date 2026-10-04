@@ -10,7 +10,6 @@ from backend.governance.audit import audit_store
 
 logger = logging.getLogger("Orchestrator")
 
-
 class Orchestrator:
     """PRISM Workflow: Procurement -> Governance -> Human Gate -> Action (Fail-Closed)"""
 
@@ -47,6 +46,7 @@ class Orchestrator:
                 recovery_used = True
 
             # AGENT 3 - Action Execution Gated by Governance
+            # IMPORTANT: This is workflow action, NOT human approval action
             if gov_result["decision"] == "REJECTED" or gov_result.get("requires_human_approval"):
                 action_result = self.action.execute_action(
                     audit_id,
@@ -101,6 +101,5 @@ class Orchestrator:
                 "fail_closed_recovery": True,
                 "timestamp": datetime.utcnow().isoformat()
             }
-
 
 orchestrator = Orchestrator()
