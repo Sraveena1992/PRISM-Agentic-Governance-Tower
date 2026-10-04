@@ -26,6 +26,7 @@ class HumanApprovalRequest(BaseModel):
 
 
 @app.get("/")
+@app.get("/health")
 def health():
     return {
         "status": "PRISM Running",
