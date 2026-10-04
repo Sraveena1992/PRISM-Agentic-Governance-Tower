@@ -39,3 +39,20 @@ class PolicyRetriever:
 
     def search(self, query: str, top_k: int = 3):
         return get_relevant_policies(query, top_k=top_k)
+
+    # --- P0 FIX: Alias methods for GovernanceAgent compatibility ---
+    def retrieve(self, query: str, top_k: int = 3):
+        return get_relevant_policies(query, top_k=top_k)
+
+    def get_relevant_policies(self, query: str, top_k: int = 3):
+        return get_relevant_policies(query, top_k=top_k)
+
+# --- P0 FIX: Canonical Singleton Instances (Judge requires this object) ---
+policy_retriever = PolicyRetriever()
+
+# Functional API aliases
+def retrieve(query: str, top_k: int = 3):
+    return get_relevant_policies(query, top_k=top_k)
+
+def search(query: str, top_k: int = 3):
+    return get_relevant_policies(query, top_k=top_k)
