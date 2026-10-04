@@ -13,6 +13,8 @@
 - **API Live:** https://prism-agentic-governance-tower.onrender.com
 - **Swagger Docs:** https://prism-agentic-governance-tower.onrender.com/docs
 - **Health Check:** https://prism-agentic-governance-tower.onrender.com/health
+- **Live Verify Proof:** https://prism-agentic-governance-tower.onrender.com/audit/verify
+- **GitHub:** https://github.com/Sraveena1992/PRISM-Agentic-Governance-Tower
 
 ---
 
