@@ -1,6 +1,5 @@
 import os
 
-# Free LLM - No billing needed - WINNER FACTS
 try:
     import google.generativeai as genai
     GEMINI_KEY = os.getenv("GEMINI_API_KEY")
@@ -13,28 +12,48 @@ except:
     gemini_model = None
 
 def get_procurement_reasoning(vendor_id, esg_score, gst_fraud_flag, sanctions_flag, financial=75):
-    base_reason = f"As Procurement Agent, I received vendor {vendor_id} with ESG:{esg_score}, financial_stability:{financial}, GST_fraud:{gst_fraud_flag}, Sanctions:{sanctions_flag}. Data completeness: sufficient. Plan: 1) Call policy_retriever for ESG threshold & fraud policy, 2) Call ml_risk_scorer for risk signal, 3) Handoff enriched payload to GovernanceAgent. Tools: policy_retriever.retrieve, risk_scorer.predict_risk"
+    base = f"As Procurement Agent, received {vendor_id} ESG:{esg_score} GST_fraud:{gst_fraud_flag} Sanctions:{sanctions_flag}. Plan: 1) policy_retriever.retrieve for ESG/fraud threshold, 2) ml_risk_scorer.predict_risk, 3) handoff to GovernanceAgent with fail-closed safety. Tools used: policy_retriever, risk_scorer."
     if gemini_model:
         try:
-            prompt = f"You are PRISM Procurement Agent. Vendor {vendor_id} ESG:{esg_score} Fraud:{gst_fraud_flag} Sanctions:{sanctions_flag}. Write 2-line factual plan using tools: policy_retriever.retrieve, risk_scorer.predict_risk, governance_decision."
-            resp = gemini_model.generate_content(prompt)
-            return resp.text
+            p = f"PRISM Procurement Agent: Vendor {vendor_id} ESG {esg_score} Fraud {gst_fraud_flag} Sanctions {sanctions_flag}. Write 2-line factual tool plan."
+            r = gemini_model.generate_content(p)
+            return r.text
         except:
-            return base_reason
-    return base_reason
+            return base
+    return base
 
-# FIX for orchestrator - enrich method added
 class ProcurementAgent:
-    def enrich(self, vendor_id, esg_score, gst_fraud_flag, sanctions_flag, financial=75):
-        reasoning = get_procurement_reasoning(vendor_id, esg_score, gst_fraud_flag, sanctions_flag, financial)
+    def enrich(self, *args, **kwargs):
+        # Handle all call styles: enrich(dict), enrich(vendor_id,...), enrich(kwargs)
+        vendor_id = kwargs.get("vendor_id", "VEND-UNKNOWN")
+        esg_score = kwargs.get("esg_score", 75)
+        gst_fraud = kwargs.get("gst_fraud_flag", 0)
+        sanc = kwargs.get("sanctions_flag", 0)
+        financial = kwargs.get("financial", 75)
+
+        if args:
+            if isinstance(args[0], dict):
+                d = args[0]
+                vendor_id = d.get("vendor_id", vendor_id)
+                esg_score = d.get("esg_score", esg_score)
+                gst_fraud = d.get("gst_fraud_flag", gst_fraud)
+                sanc = d.get("sanctions_flag", sanc)
+                financial = d.get("financial", financial)
+            else:
+                if len(args) > 0: vendor_id = args[0]
+                if len(args) > 1: esg_score = args[1]
+                if len(args) > 2: gst_fraud = args[2]
+                if len(args) > 3: sanc = args[3]
+
+        reasoning = get_procurement_reasoning(vendor_id, esg_score, gst_fraud, sanc, financial)
         return {
             "vendor_id": vendor_id,
             "esg_score": esg_score,
-            "gst_fraud_flag": gst_fraud_flag,
-            "sanctions_flag": sanctions_flag,
+            "gst_fraud_flag": gst_fraud,
+            "sanctions_flag": sanc,
             "reasoning_trace": reasoning,
             "financial_stability": financial
         }
-    
-    def run(self, vendor_id, esg_score, gst_fraud_flag, sanctions_flag, financial=75):
-        return self.enrich(vendor_id, esg_score, gst_fraud_flag, sanctions_flag, financial)
+
+    def run(self, *args, **kwargs):
+        return self.enrich(*args, **kwargs)
