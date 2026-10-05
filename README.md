@@ -3,7 +3,7 @@
 
 ![Live](https://img.shields.io/badge/Live-200%20OK-brightgreen) ![Agents](https://img.shields.io/badge/Agents-3--Agent%20Decoupled-blue) ![Audit](https://img.shields.io/badge/Audit-SHA256%20Evident-black) ![RAG](https://img.shields.io/badge/RAG-TF--IDF%20%2B%20Cosine-orange) ![LLM](https://img.shields.io/badge/LLM-Gemini%201.5%20Flash-blue) ![Build](https://img.shields.io/badge/Build-3.0.0%20Prototype-success)
 
-**PRISM addresses enterprise vendor compliance risk.** Single-agent automation carries fraud risks, while manual validation creates operational bottlenecks. PRISM decouples governance into a **3-Agent Architecture** (Procurement Data Agent, Governance & Risk Agent, Action Execution Agent) with ML Risk Scoring, TF-IDF Policy Vector RAG, Human-in-the-Loop Gate, Fail-Closed Recovery, and Tamper-Evident SHA-256 Audit Chaining.
+**PRISM addresses enterprise vendor compliance risk.** Un-governed agentic automation can create fraud and compliance risks, while manual validation creates operational bottlenecks. PRISM decouples governance into a **3-Agent Architecture** (Procurement Data Agent, Governance & Risk Agent, Action Execution Agent) with ML Risk Scoring, TF-IDF Policy Vector RAG, Human-in-the-Loop Gate, Fail-Closed Recovery, and Tamper-Evident SHA-256 Audit Chaining.
 
 > *AI-assisted planning. Deterministic governance. Fail-closed execution. Tamper-evident audit.*
 
@@ -28,7 +28,7 @@
 **Winning Thesis:** *AI can plan the action. PRISM decides whether that action is allowed to execute.*
 
 ---
-## 📸 Live Production Proof - HAT-TRICK COMPLETE ✅
+## 📸 Live Prototype Proof - HAT-TRICK COMPLETE ✅
 
 | 1️⃣ VEND-001 APPROVED (0.05) | 2️⃣ VEND-002 REVIEW (0.75) | 3️⃣ VEND-003 REJECTED (0.99) |
 | :---: | :---: | :---: |
