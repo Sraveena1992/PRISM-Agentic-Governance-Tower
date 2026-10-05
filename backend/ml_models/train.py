@@ -1,54 +1,47 @@
 import os
 import joblib
 import numpy as np
-import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 
-MODEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "random_forest_risk_model.joblib"))
+# Ensure path is absolute
+MODEL_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(MODEL_DIR, "random_forest_risk_model.joblib")
 
-def generate_synthetic_training_data(n_samples: int = 1000):
-    np.random.seed(42)
-    
-    esg_score = np.random.uniform(10.0, 100.0, n_samples)
-    financial_stability = np.random.uniform(0.1, 1.0, n_samples)
-    gst_fraud_flag = np.random.choice([0, 1], size=n_samples, p=[0.92, 0.08])
-    sanctions_match = np.random.choice([0, 1], size=n_samples, p=[0.95, 0.05])
-    invoice_anomaly = np.random.uniform(0.0, 1.0, n_samples)
+print(f"[TRAIN] Starting training, target: {MODEL_PATH}")
 
-    # Risk Labeling Logic
-    high_risk_condition = (
-        (gst_fraud_flag == 1) | 
-        (sanctions_match == 1) | 
-        (esg_score < 40.0) | 
-        (financial_stability < 0.5) | 
-        (invoice_anomaly > 0.6)
-    )
-    labels = np.where(high_risk_condition, 1, 0)
+# 1500 synthetic samples - 5 features [esg, fin, gst, sanc, anomaly]
+np.random.seed(42)
+n_samples = 1500
 
-    df = pd.DataFrame({
-        "esg_score": esg_score,
-        "financial_stability_score": financial_stability,
-        "gst_fraud_flag": gst_fraud_flag,
-        "sanctions_match": sanctions_match,
-        "invoice_anomaly": invoice_anomaly,
-        "high_risk_label": labels
-    })
-    return df
+esg = np.random.uniform(10, 95, n_samples)
+fin = np.random.uniform(0.1, 1.0, n_samples)
+gst = np.random.choice([0, 1], n_samples, p=[0.85, 0.15])
+sanc = np.random.choice([0, 1], n_samples, p=[0.9, 0.1])
+anom = np.random.uniform(0.0, 1.0, n_samples)
 
+X = np.column_stack([esg, fin, gst, sanc, anom])
 
-def train_and_save_model():
-    print("[ML Train] Generating synthetic procurement dataset...")
-    df = generate_synthetic_training_data(n_samples=1500)
-    
-    X = df[["esg_score", "financial_stability_score", "gst_fraud_flag", "sanctions_match", "invoice_anomaly"]]
-    y = df["high_risk_label"]
+# Risk logic: fraud/sanctions = high risk, low esg/fin + high anomaly = high risk
+y = ((gst == 1) | (sanc == 1) | (esg < 40) | (fin < 0.4) | (anom > 0.7)).astype(int)
 
-    clf = RandomForestClassifier(n_estimators=100, max_depth=6, random_state=42)
-    clf.fit(X, y)
+# Add some noise
+y = np.where(np.random.rand(n_samples) < 0.05, 1 - y, y)
 
-    joblib.dump(clf, MODEL_PATH)
-    print(f"[ML Train] Trained RandomForest model saved to {MODEL_PATH}")
+clf = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+clf.fit(X, y)
 
+os.makedirs(MODEL_DIR, exist_ok=True)
+joblib.dump(clf, MODEL_PATH)
+
+print(f"✅ Model trained: {X.shape}, Risk samples: {np.sum(y)}")
+print(f"✅ Model saved at {MODEL_PATH}")
+print(f"✅ File exists: {os.path.exists(MODEL_PATH)}")
+print(f"✅ File size: {os.path.getsize(MODEL_PATH)} bytes")
+
+# Verify load
+loaded = joblib.load(MODEL_PATH)
+test = np.array([[85, 0.9, 0, 0, 0.1]])
+print(f"✅ Verification pred: {loaded.predict_proba(test)[0]}")
 
 if __name__ == "__main__":
-    train_and_save_model()
+    print("Training complete")
