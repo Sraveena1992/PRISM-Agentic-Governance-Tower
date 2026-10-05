@@ -50,11 +50,13 @@ GOVERNANCE AGENT
 
 ---
 
-## 5. ML + RAG + GenAI Map
-- **RAG:** TF-IDF policy vector retrieval (lightweight prototype) — 5 policy corpus, cosine similarity, extensible
-- **ML:** ML-assisted procurement risk scoring trained on synthetic prototype data — RandomForest (100 trees, 5 features, 1500 samples)
-- **GenAI:** GPT-4o-mini for procurement planning & gate reason explanations
-- **Audit:** Tamper-evident SHA-256 audit chain (`canonical JSON` + `previous_hash`), NOT blockchain
+## 5. 5 Live Proofs (Fail-Closed + Tamper-Evident)
+
+A. Clean Vendor (VEND-001) → AI PLAN → GOVERNANCE → APPROVED → PO_CREATED
+B. Risky Vendor (VEND-002, 5L, ESG 45) → REVIEW → NO_ACTION → HUMAN → PO_CREATED
+C. Fraud Vendor (VEND-003, gst_fraud_flag=1) → STATUTORY GATE → 0.99 → REJECTED → NO_ACTION
+D. System Failure (/simulate-failure) → SAFE HOLD → 0.99 → REJECTED → NO_ACTION → SUBSYSTEM_FAILURE
+E. Audit (/audit/verify) → SHA-256 INTACT → mutate backend/audit/audit_chain.json → TAMPERED → restore → INTACT
 
 ---
 
