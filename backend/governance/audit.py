@@ -25,14 +25,14 @@ class AuditStore:
             json.dump(data, f, indent=2)
 
     def _hash(self, record: Dict) -> str:
-        s = json.dumps(record, sort_keys=True, default=str)
+        # Canonical JSON without current_hash itself
+        copy = {k: v for k, v in record.items() if k!= "current_hash"}
+        s = json.dumps(copy, sort_keys=True, default=str)
         return hashlib.sha256(s.encode()).hexdigest()
 
-    # --- CORE METHODS ---
     def log_event(self, audit_id: str, action: str, details: Dict) -> Dict:
         chain = self._load()
         prev_hash = chain[-1].get("current_hash", "GENESIS") if chain else "GENESIS"
-
         entry = {
             "id": audit_id,
             "audit_id": audit_id,
@@ -40,13 +40,11 @@ class AuditStore:
             "vendor_id": details.get("vendor_id", "UNKNOWN"),
             "details": details,
             "timestamp": datetime.utcnow().isoformat(),
-            "previous_hash": prev_hash
+            "previous_hash": prev_hash,
+            "decision": details.get("governance", {}).get("decision", "REVIEW"),
+            "risk_score": details.get("governance", {}).get("risk_score", 0.5)
         }
         entry["current_hash"] = self._hash(entry)
-        # Add fields expected by dashboard
-        entry["decision"] = details.get("governance", {}).get("decision", details.get("decision", "REVIEW"))
-        entry["risk_score"] = details.get("governance", {}).get("risk_score", details.get("risk_score", 0.5))
-
         chain.append(entry)
         self._save(chain)
         return entry
@@ -55,7 +53,6 @@ class AuditStore:
         chain = self._load()
         prev_hash = chain[-1].get("current_hash", "GENESIS") if chain else "GENESIS"
         audit_id = record.get("audit_id", f"AUD-{uuid.uuid4().hex[:6].upper()}")
-
         entry = {
             "id": audit_id,
             "audit_id": audit_id,
@@ -67,9 +64,7 @@ class AuditStore:
             "previous_hash": prev_hash,
             **record
         }
-        if "current_hash" not in entry:
-            entry["current_hash"] = self._hash(entry)
-
+        entry["current_hash"] = self._hash(entry)
         chain.append(entry)
         self._save(chain)
         return entry
@@ -85,28 +80,46 @@ class AuditStore:
         return self._load()
 
     def get_by_id(self, audit_id: str):
-        chain = self._load()
-        for r in chain:
+        for r in self._load():
             if r.get("audit_id") == audit_id or r.get("id") == audit_id:
                 return r
         return None
 
+    # --- P0 #2 FINAL FIX: REAL VERIFICATION ---
     def verify_chain(self):
         chain = self._load()
         if not chain:
-            return {"is_valid": True, "verified": True, "count": 0, "message": "Empty chain - valid", "records_checked": 0}
+            return {"is_valid": True, "verified": True, "count": 0, "records_checked": 0, "message": "Empty chain valid", "chain_status": "INTACT"}
 
-        for i in range(1, len(chain)):
-            if chain[i].get("previous_hash")!= chain[i-1].get("current_hash"):
-                return {"is_valid": False, "verified": False, "count": len(chain), "records_checked": len(chain), "message": f"Tamper at index {i}"}
+        for i, record in enumerate(chain):
+            stored_hash = record.get("current_hash")
+            # CHECK 1: Recompute hash of record itself
+            expected_hash = self._hash(record)
+            if stored_hash!= expected_hash:
+                return {
+                    "is_valid": False, "verified": False,
+                    "count": len(chain), "records_checked": len(chain),
+                    "chain_status": "TAMPERED",
+                    "message": f"TAMPERED at index {i}: Record mutation detected. Expected {expected_hash[:8]}... got {stored_hash[:8]}...",
+                    "tampered_index": i
+                }
+            # CHECK 2: Linkage
+            if i > 0:
+                if record.get("previous_hash")!= chain[i-1].get("current_hash"):
+                    return {
+                        "is_valid": False, "verified": False,
+                        "count": len(chain), "records_checked": len(chain),
+                        "chain_status": "TAMPERED",
+                        "message": f"TAMPERED at index {i}: previous_hash linkage broken",
+                        "tampered_index": i
+                    }
 
         return {
-            "is_valid": True,
-            "verified": True,
-            "count": len(chain),
-            "records_checked": len(chain),
+            "is_valid": True, "verified": True,
+            "count": len(chain), "records_checked": len(chain),
+            "chain_status": "INTACT",
+            "algorithm": "SHA-256",
             "message": "Full cryptographic verification passed - SHA-256 chain INTACT"
         }
 
-# Singleton
 audit_store = AuditStore()
