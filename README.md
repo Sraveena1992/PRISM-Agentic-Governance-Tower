@@ -38,6 +38,13 @@
 
 **Verdict:** 3 different governance paths proven LIVE.
 
+### ✅ Health Check LIVE - Gemini Verified
+<img width="1600" height="862" alt="health-gemini-ready" src="https://github.com/user-attachments/assets/22176ecc-2653-4c3b-9440-5c1cf39f7da5" />
+
+**Live:** https://prism-agentic-governance-tower.onrender.com
+
+`PRISM Running | RAG: READY | ML: READY | AUDIT: READY | LLM: Google Gemini gemini-1.5-flash`
+
 ### 4️⃣ SHA-256 Audit Verification
 **Endpoint:** `GET /audit/verify` → `{"verified": true, "records_checked": int, "algorithm": "SHA-256", "chain_status": "INTACT"}`
 
