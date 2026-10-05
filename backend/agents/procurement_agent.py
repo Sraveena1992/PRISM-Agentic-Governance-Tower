@@ -11,11 +11,11 @@ try:
 except:
     gemini_model = None
 
-def get_procurement_reasoning(vendor_id, esg_score, gst_fraud_flag, sanctions_flag, financial=75):
-    base = f"As Procurement Agent, received {vendor_id} ESG:{esg_score} GST_fraud:{gst_fraud_flag} Sanctions:{sanctions_flag}. Plan: 1) policy_retriever.retrieve for ESG/fraud threshold, 2) ml_risk_scorer.predict_risk, 3) handoff to GovernanceAgent with fail-closed safety. Tools used: policy_retriever, risk_scorer."
+def get_procurement_reasoning(vendor_id, esg_score, gst_fraud_flag, sanctions_match, financial=75):
+    base = f"As Procurement Agent, received {vendor_id} ESG:{esg_score} GST_fraud:{gst_fraud_flag} Sanctions:{sanctions_match}. Plan: 1) policy_retriever.retrieve for ESG/fraud threshold, 2) ml_risk_scorer.predict_risk, 3) handoff to GovernanceAgent with fail-closed safety. Tools used: policy_retriever, risk_scorer."
     if gemini_model:
         try:
-            p = f"PRISM Procurement Agent: Vendor {vendor_id} ESG {esg_score} Fraud {gst_fraud_flag} Sanctions {sanctions_flag}. Write 2-line factual tool plan."
+            p = f"PRISM Procurement Agent: Vendor {vendor_id} ESG {esg_score} Fraud {gst_fraud_flag} Sanctions {sanctions_match}. Write 2-line factual tool plan."
             r = gemini_model.generate_content(p)
             return r.text
         except:
@@ -28,7 +28,7 @@ class ProcurementAgent:
         vendor_id = kwargs.get("vendor_id", "VEND-UNKNOWN")
         esg_score = kwargs.get("esg_score", 75)
         gst_fraud = kwargs.get("gst_fraud_flag", 0)
-        sanc = kwargs.get("sanctions_flag", 0)
+        sanc = kwargs.get("sanctions_match", 0)
         financial = kwargs.get("financial", 75)
 
         if args:
@@ -37,7 +37,7 @@ class ProcurementAgent:
                 vendor_id = d.get("vendor_id", vendor_id)
                 esg_score = d.get("esg_score", esg_score)
                 gst_fraud = d.get("gst_fraud_flag", gst_fraud)
-                sanc = d.get("sanctions_flag", sanc)
+                sanc = d.get("sanctions_match", sanc)
                 financial = d.get("financial", financial)
             else:
                 if len(args) > 0: vendor_id = args[0]
@@ -50,7 +50,7 @@ class ProcurementAgent:
             "vendor_id": vendor_id,
             "esg_score": esg_score,
             "gst_fraud_flag": gst_fraud,
-            "sanctions_flag": sanc,
+            "sanctions_match": sanc,
             "reasoning_trace": reasoning,
             "financial_stability": financial
         }
