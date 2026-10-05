@@ -44,6 +44,9 @@ def normalize_vendor_dict(data: dict) -> dict:
         d["gstin"] = ""
     if d.get("vendor_name"):
         d["document_text"] = f"{d.get('vendor_name')} {d.get('document_text','')} Amount:{d.get('amount','')}"
+    # Canonical fix for old README: sanctions_flag -> sanctions_match
+    if "sanctions_flag" in d and "sanctions_match" not in d:
+        d["sanctions_match"] = d["sanctions_flag"]
     return d
 
 def get_ml_status():
@@ -84,6 +87,15 @@ def get_audit_status():
     except Exception as e:
         return f"FAILED: {e}"
 
+def get_llm_status():
+    # FIX #1: Gemini is canonical - no OpenAI anywhere
+    configured = bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"))
+    return {
+        "provider": "Google Gemini",
+        "model": "gemini-1.5-flash",
+        "configured": configured
+    }
+
 @app.get("/")
 def root():
     return {
@@ -92,7 +104,8 @@ def root():
         "architecture": "3 decoupled Python agents via backend/orchestrator.py",
         "rag": get_rag_status(),
         "ml": get_ml_status()[0],
-        "audit": get_audit_status()
+        "audit": get_audit_status(),
+        "llm": get_llm_status()
     }
 
 @app.get("/health")
@@ -101,11 +114,12 @@ def health():
     return {
         "status": "PRISM Running",
         "agents": ["ProcurementAgent", "GovernanceAgent", "ActionAgent"],
+        "architecture": "3 decoupled Python agents via backend/orchestrator.py",
         "rag": get_rag_status(),
         "ml": ml_status,
         "ml_model": ml_file or "fallback",
         "audit": get_audit_status(),
-        "llm": {"provider": "OpenAI", "model": "gpt-4o-mini", "configured": bool(os.getenv("OPENAI_API_KEY"))}
+        "llm": get_llm_status()
     }
 
 @app.post("/process-vendor")
