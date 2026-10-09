@@ -14,6 +14,7 @@
 - **Health Check:** https://prism-agentic-governance-tower.onrender.com/health
 - **Audit Verify:** https://prism-agentic-governance-tower.onrender.com/audit/verify
 - **GitHub:** https://github.com/Sraveena1992/PRISM-Agentic-Governance-Tower
+- **Live Demo:** https://www.loom.com/share/99d91899683b4e44b4f1ded0765d63b0
 
 ---
 ## 🤖 3-Agent Decoupled Architecture
